@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">AmbulanceTracker</string>
+    <string name="request_ambulance">Request Ambulance</string>
+    <string name="call_an_ambulance_and_save_a_life">Call An Ambulance And Save A Life</string>
+    <string name="we_are_dedicated_to_offering_fast_and_reliable_emergency_medical_services">We are dedicated to offering fast and reliable emergency medical services</string>
+    <string name="todo">TODO</string>
+    <string name="mapbox_access_token">sk.eyJ1IjoiYnJpYW5raWJ1aSIsImEiOiJjbDhvYWVmaHcxMjllM3pxamIwMmM2bzJkIn0.k2rqUT71Q0brMa_RwliduQ</string>
+</resources>
