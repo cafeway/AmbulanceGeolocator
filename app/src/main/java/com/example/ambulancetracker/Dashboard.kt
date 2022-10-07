@@ -14,17 +14,20 @@ import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import com.mapbox.android.gestures.MoveGestureDetector
+import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MapView
 import com.mapbox.maps.MapboxMap
 import com.mapbox.maps.Style
+import com.mapbox.maps.extension.observable.eventdata.MapLoadedEventData
 import com.mapbox.maps.extension.style.expressions.dsl.generated.interpolate
 import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.annotation.AnnotationManagerImpl
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
+import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadedListener
 import com.mapbox.maps.plugin.gestures.GesturesPlugin
 import com.mapbox.maps.plugin.gestures.OnMapClickListener
 import com.mapbox.maps.plugin.gestures.OnMoveListener
@@ -32,14 +35,20 @@ import com.mapbox.maps.plugin.gestures.gestures
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
+import com.mapbox.navigation.base.extensions.applyDefaultNavigationOptions
+import com.mapbox.navigation.base.route.NavigationRoute
+import com.mapbox.navigation.base.route.NavigationRouterCallback
+import com.mapbox.navigation.base.route.RouterFailure
+import com.mapbox.navigation.base.route.RouterOrigin
+import com.mapbox.navigation.core.MapboxNavigation
 import java.lang.ref.WeakReference
 
 /**
  * Tracks the user location on screen, simulates a navigation session.
  */
-class Dashboard: AppCompatActivity() {
+class Dashboard: AppCompatActivity(),OnMapLoadedListener {
 
-
+    private  val mapBoxNavigation: MapboxNavigation? = null
 
     private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
         mapView.getMapboxMap().setCamera(CameraOptions.Builder().bearing(it).build())
@@ -67,8 +76,8 @@ class Dashboard: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val actionBar = supportActionBar
         actionBar?.hide()
-        mapView = MapView(this)
-        setContentView(mapView)
+        setContentView(R.layout.activity_dashboard)
+        mapView = findViewById(R.id.mapView)
         onMapReady()
     }
 
@@ -174,7 +183,31 @@ class Dashboard: AppCompatActivity() {
             .removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
         mapView.gestures.removeOnMoveListener(onMoveListener)
     }
+    // This function generates a route between the current users location to a marked area on the map
+    private fun getRoute(origin:Point,destination:Point){
+        mapBoxNavigation?.requestRoutes(
+            RouteOptions.builder()
+                .applyDefaultNavigationOptions()
+                .coordinatesList(listOf(origin,destination))
+                .build(),
+                    routesRequestCallback
+        )
+    }
+    // Routes request callback
+    private val routesRequestCallback = object: NavigationRouterCallback{
+        override fun onCanceled(routeOptions: RouteOptions, routerOrigin: RouterOrigin) {
+            TODO("Not yet implemented")
+        }
 
+        override fun onFailure(reasons: List<RouterFailure>, routeOptions: RouteOptions) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onRoutesReady(routes: List<NavigationRoute>, routerOrigin: RouterOrigin) {
+            TODO("Not yet implemented")
+        }
+
+    }
     override fun onDestroy() {
         super.onDestroy()
         mapView.location
@@ -190,6 +223,10 @@ class Dashboard: AppCompatActivity() {
             return  true
         }
 
+    }
+
+    override fun onMapLoaded(eventData: MapLoadedEventData) {
+        Log.d("Mapclicked","mapLoaded")
     }
 
 //    override fun onRequestPermissionsResult(
