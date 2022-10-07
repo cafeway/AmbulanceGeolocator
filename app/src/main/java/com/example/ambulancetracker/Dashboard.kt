@@ -1,214 +1,203 @@
 package com.example.ambulancetracker
 
+
 import android.annotation.SuppressLint
-import android.app.backup.BackupAgentHelper
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.location.Location
-import android.nfc.Tag
-import androidx.appcompat.app.AppCompatActivity
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.os.PerformanceHintManager
 import android.util.Log
 import android.widget.Toast
-import androidx.annotation.NonNull
+import androidx.annotation.DrawableRes
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.content.ContextCompat
-import com.google.android.material.internal.NavigationMenu
-import com.google.android.material.internal.NavigationMenuPresenter
-import com.mapbox.android.core.permissions.PermissionsListener
-import com.mapbox.android.core.permissions.PermissionsManager
 import com.mapbox.android.gestures.MoveGestureDetector
-import com.mapbox.api.directions.v5.models.DirectionsRoute
-import com.mapbox.geojson.Feature
-import com.mapbox.geojson.GeoJson
 import com.mapbox.geojson.Point
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.geometry.LatLng
-import com.mapbox.mapboxsdk.location.*
-import com.mapbox.mapboxsdk.location.modes.CameraMode
-import com.mapbox.mapboxsdk.location.modes.RenderMode
-import com.mapbox.mapboxsdk.maps.MapView
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.layers.PropertyValue
-import com.mapbox.mapboxsdk.style.layers.SymbolLayer
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
-
-import com.mapbox.navigation.core.MapboxNavigation
-import com.mapbox.navigation.ui.OnNavigationReadyCallback
-import com.mapbox.navigation.ui.listeners.NavigationListener
+import com.mapbox.maps.CameraOptions
+import com.mapbox.maps.MapView
+import com.mapbox.maps.MapboxMap
+import com.mapbox.maps.Style
+import com.mapbox.maps.extension.style.expressions.dsl.generated.interpolate
+import com.mapbox.maps.plugin.LocationPuck2D
+import com.mapbox.maps.plugin.annotation.AnnotationManagerImpl
+import com.mapbox.maps.plugin.annotation.annotations
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
+import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
+import com.mapbox.maps.plugin.gestures.GesturesPlugin
+import com.mapbox.maps.plugin.gestures.OnMapClickListener
+import com.mapbox.maps.plugin.gestures.OnMoveListener
+import com.mapbox.maps.plugin.gestures.gestures
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
+import com.mapbox.maps.plugin.locationcomponent.location
 import java.lang.ref.WeakReference
 
-import java.util.*
-
-var mapView: MapView? = null
-
-
-class Dashboard : AppCompatActivity(),OnMapReadyCallback, PermissionsListener,
-    MapboxMap.OnMapClickListener, OnNavigationReadyCallback, NavigationListener {
-
-
-    // Declare variables for use
-    private var permissionsManager: PermissionsManager = PermissionsManager(this)
-    private lateinit var locationComponent: LocationComponent
-    private lateinit var mapboxMap: MapboxMap
-    private var currentRoute: DirectionsRoute?= null
-    private lateinit var mapBoxNavigation: MapboxNavigation
-    private val TAG = "directions activity"
+/**
+ * Tracks the user location on screen, simulates a navigation session.
+ */
+class Dashboard: AppCompatActivity() {
 
 
 
+    private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
+        mapView.getMapboxMap().setCamera(CameraOptions.Builder().bearing(it).build())
+    }
+
+    private val onIndicatorPositionChangedListener = OnIndicatorPositionChangedListener {
+        mapView.getMapboxMap().setCamera(CameraOptions.Builder().center(it).build())
+        mapView.gestures.focalPoint = mapView.getMapboxMap().pixelForCoordinate(it)
+    }
+
+    private val onMoveListener = object : OnMoveListener {
+        override fun onMoveBegin(detector: MoveGestureDetector) {
+            onCameraTrackingDismissed()
+        }
+
+        override fun onMove(detector: MoveGestureDetector): Boolean {
+            return false
+        }
+
+        override fun onMoveEnd(detector: MoveGestureDetector) {}
+    }
+    private lateinit var mapView: MapView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Mapbox.getInstance(this, getString(R.string.mapbox_access_token))
-
-        setContentView(R.layout.activity_dashboard)
         val actionBar = supportActionBar
         actionBar?.hide()
-
-
-        mapView = findViewById(R.id.mapView)
-        mapView?.onCreate(savedInstanceState)
-        mapView?.getMapAsync(this)
+        mapView = MapView(this)
+        setContentView(mapView)
+        onMapReady()
     }
 
-    override fun onMapReady(mapboxMap: MapboxMap) {
-        this.mapboxMap = mapboxMap
-        mapboxMap.setStyle(Style.MAPBOX_STREETS){
-            enableLocationComponent(it)
-            addDestinationSymbolLayer(it)
-            mapboxMap.addOnMapClickListener(this)
+    private fun onMapReady() {
+        mapView.getMapboxMap().setCamera(
+            CameraOptions.Builder()
+                .zoom(14.0)
+                .build()
+        )
+        mapView.getMapboxMap().loadStyleUri(
+            Style.MAPBOX_STREETS
+        ) {
+            initLocationComponent()
+            setupGesturesListener()
         }
     }
 
-    private fun addDestinationSymbolLayer(loadedMapStyle: Style) {
-        loadedMapStyle!!.addImage("destination-icon-id", BitmapFactory.decodeResource(this.resources,R.drawable.mapbox_marker_icon_default))
-
-        val geoJsonSource = GeoJsonSource("destination-source-id")
-        loadedMapStyle.addSource(geoJsonSource)
-
-        val destinationSymboLayer = SymbolLayer("destination-symbol-layer-id","destination-source-id")
-        destinationSymboLayer.withProperties(PropertyFactory.iconImage("destination-icon-id"),PropertyFactory.iconAllowOverlap(true),PropertyFactory.iconIgnorePlacement(true))
-
-        loadedMapStyle.addLayer(destinationSymboLayer)
+    private fun setupGesturesListener() {
+        mapView.gestures.addOnMoveListener(onMoveListener)
+        mapView.gestures.addOnMapClickListener(onMapClickListener)
     }
 
-    // this function handles clicks from maps
-    override fun onMapClick(point: LatLng): Boolean {
-        val destinationPoint = Point.fromLngLat(point.longitude,point.latitude)
-        val originalPoint = Point.fromLngLat(this.mapboxMap.locationComponent!!.lastKnownLocation!!.longitude,this.mapboxMap.locationComponent!!.lastKnownLocation!!.latitude)
-        val source = mapboxMap!!.style!!.getSourceAs<GeoJsonSource>("destination-source-id")
-
-        source?.setGeoJson(Feature.fromGeometry(destinationPoint))
-
-        getRoute(originalPoint,destinationPoint)
-        return true
+    private fun initLocationComponent() {
+        val locationComponentPlugin = mapView.location
+        locationComponentPlugin.updateSettings {
+            this.enabled = true
+            this.locationPuck = LocationPuck2D(
+                bearingImage = AppCompatResources.getDrawable(
+                    this@Dashboard,
+                    R.drawable.mapbox_user_puck_icon,
+                ),
+                shadowImage = AppCompatResources.getDrawable(
+                    this@Dashboard,
+                    R.drawable.mapbox_user_icon_shadow,
+                ),
+                scaleExpression = interpolate {
+                    linear()
+                    zoom()
+                    stop {
+                        literal(0.0)
+                        literal(0.6)
+                    }
+                    stop {
+                        literal(20.0)
+                        literal(1.0)
+                    }
+                }.toJson()
+            )
+        }
+        locationComponentPlugin.addOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+        locationComponentPlugin.addOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
     }
-
-    private fun getRoute(origin: Point?, destination: Point?) {
+    //This function add annotations or a marker to the map
+    @SuppressLint("ResourceType")
+    private fun AddMarkerAnnotaton (point: Point){
+        // Create an instance of the Annotation API and get the PointAnnotationManager.
+        bitmapFromDrawableRes(
+            this@Dashboard,
+            R.drawable.red_marker
+        )?.let {
+            val annotationApi = mapView?.annotations
+            val pointAnnotationManager = annotationApi?.createPointAnnotationManager(mapView!!)
+            // Set options for the resulting symbol layer.
+            val pointAnnotationOptions: PointAnnotationOptions = PointAnnotationOptions()
+                // Define a geographic coordinate.
+                .withPoint(point)
+                // Specify the bitmap you assigned to the point annotation
+                // The bitmap will be added to map style automatically.
+                .withIconImage(it)
+            // Add the resulting pointAnnotation to the map.
+            pointAnnotationManager?.create(pointAnnotationOptions)
+        }
 
     }
+    private fun bitmapFromDrawableRes(context: Context, @DrawableRes resourceId: Int) =
+        convertDrawableToBitmap(AppCompatResources.getDrawable(context, resourceId))
 
-
-    // This function get the users current location
-    @SuppressLint("MissingPermission")
-    private fun enableLocationComponent(loadedMapStyle: Style) {
-        // check if the location permission is granted or not
-        if (PermissionsManager.areLocationPermissionsGranted(this)){
-            // create and customize the LocationComponent's option
-            val customLocationComponentOptions = LocationComponentOptions.builder(this)
-                .trackingGesturesManagement(true)
-                .accuracyColor(ContextCompat.getColor(this,R.color.mapbox_blue))
-                .build()
-
-
-            val locationComponentActivationOptions = LocationComponentActivationOptions.builder(this,loadedMapStyle)
-                .locationComponentOptions(customLocationComponentOptions)
-                .build()
-
-
-            // get and instance of the locaation component and  then adjust its settings
-            this.mapboxMap.locationComponent.apply{
-                //activate the location component with options
-                activateLocationComponent(locationComponentActivationOptions)
-
-                // enable to show the location component
-                isLocationComponentEnabled = true
-
-                // set the camera mode
-                cameraMode = CameraMode.TRACKING
-
-
-                // choose and set a render mode
-                renderMode = RenderMode.COMPASS
-            }
+    private fun convertDrawableToBitmap(sourceDrawable: Drawable?): Bitmap? {
+        if (sourceDrawable == null) {
+            return null
+        }
+        return if (sourceDrawable is BitmapDrawable) {
+            sourceDrawable.bitmap
         } else {
-            permissionsManager = PermissionsManager(this)
-            permissionsManager.requestLocationPermissions(this)
+            // copying drawable object to not manipulate on the same reference
+            val constantState = sourceDrawable.constantState ?: return null
+            val drawable = constantState.newDrawable().mutate()
+            val bitmap: Bitmap = Bitmap.createBitmap(
+                drawable.intrinsicWidth, drawable.intrinsicHeight,
+                Bitmap.Config.ARGB_8888
+            )
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            bitmap
         }
     }
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
-    }
-
-    override fun onExplanationNeeded(permissionsToExplain: List<String>) {
-        Toast.makeText(this,"fhsadhfkjdshfkjhdskj", Toast.LENGTH_LONG).show()
-    }
-
-    override fun onPermissionResult(granted: Boolean)
-    {if (granted) {
-        enableLocationComponent(mapboxMap.style!!)
-    } else {
-        Toast.makeText(this,"permission denied", Toast.LENGTH_LONG).show()
-        finish()
-    }
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        mapView?.onStart()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        mapView?.onStop()
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-        mapView?.onLowMemory()
+    private fun onCameraTrackingDismissed() {
+        Toast.makeText(this, "onCameraTrackingDismissed", Toast.LENGTH_SHORT).show()
+        mapView.location
+            .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+        mapView.location
+            .removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
+        mapView.gestures.removeOnMoveListener(onMoveListener)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mapView?.onDestroy()
+        mapView.location
+            .removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
+        mapView.location
+            .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+        mapView.gestures.removeOnMoveListener(onMoveListener)
     }
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mapView?.onSaveInstanceState(outState)
-    }
+    private  val onMapClickListener = object : OnMapClickListener{
+        override fun onMapClick(point: Point): Boolean {
+            AddMarkerAnnotaton(point)
+            Log.d("Mapclicked","${point.latitude()}")
+            return  true
+        }
 
-    override fun onNavigationReady(isRunning: Boolean) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onCancelNavigation() {
-        TODO("Not yet implemented")
-    }
-
-    override fun onNavigationFinished() {
-        TODO("Not yet implemented")
     }
 
-    override fun onNavigationRunning() {
-        TODO("Not yet implemented")
-    }
-
-
+//    override fun onRequestPermissionsResult(
+//        requestCode: Int,
+//        permissions: Array<String>,
+//        grantResults: IntArray
+//    ) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+//        locationPermissionHelper.onRequestPermissionsResult(requestCode, permissions, grantResults)
+//    }
 }
