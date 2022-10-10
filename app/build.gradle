@@ -43,4 +43,5 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     implementation 'com.mapbox.maps:android:10.8.1'
     implementation "com.mapbox.navigation:ui-dropin:2.8.0"
+    implementation "com.google.android.gms:play-services-location:18.0.0"
 }

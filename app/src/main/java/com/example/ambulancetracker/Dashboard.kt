@@ -1,25 +1,28 @@
 package com.example.ambulancetracker
 
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.app.ActivityCompat
+import com.mapbox.android.core.location.*
 import com.mapbox.android.gestures.MoveGestureDetector
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.geojson.Point
-import com.mapbox.maps.CameraOptions
-import com.mapbox.maps.MapView
-import com.mapbox.maps.MapboxMap
-import com.mapbox.maps.Style
+import com.mapbox.maps.*
 import com.mapbox.maps.extension.observable.eventdata.MapLoadedEventData
 import com.mapbox.maps.extension.style.expressions.dsl.generated.interpolate
 import com.mapbox.maps.plugin.LocationPuck2D
@@ -32,9 +35,7 @@ import com.mapbox.maps.plugin.gestures.GesturesPlugin
 import com.mapbox.maps.plugin.gestures.OnMapClickListener
 import com.mapbox.maps.plugin.gestures.OnMoveListener
 import com.mapbox.maps.plugin.gestures.gestures
-import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
-import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
-import com.mapbox.maps.plugin.locationcomponent.location
+import com.mapbox.maps.plugin.locationcomponent.*
 import com.mapbox.navigation.base.extensions.applyDefaultNavigationOptions
 import com.mapbox.navigation.base.route.NavigationRoute
 import com.mapbox.navigation.base.route.NavigationRouterCallback
@@ -42,14 +43,14 @@ import com.mapbox.navigation.base.route.RouterFailure
 import com.mapbox.navigation.base.route.RouterOrigin
 import com.mapbox.navigation.core.MapboxNavigation
 import java.lang.ref.WeakReference
+import java.lang.Exception
 
 /**
  * Tracks the user location on screen, simulates a navigation session.
  */
-class Dashboard: AppCompatActivity(),OnMapLoadedListener {
-
+class Dashboard: AppCompatActivity(),OnMapLoadedListener,LocationEngineCallback<LocationEngineResult> {
     private  val mapBoxNavigation: MapboxNavigation? = null
-
+    private val callback = LocationListeningCallback(this)
     private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
         mapView.getMapboxMap().setCamera(CameraOptions.Builder().bearing(it).build())
     }
@@ -58,7 +59,6 @@ class Dashboard: AppCompatActivity(),OnMapLoadedListener {
         mapView.getMapboxMap().setCamera(CameraOptions.Builder().center(it).build())
         mapView.gestures.focalPoint = mapView.getMapboxMap().pixelForCoordinate(it)
     }
-
     private val onMoveListener = object : OnMoveListener {
         override fun onMoveBegin(detector: MoveGestureDetector) {
             onCameraTrackingDismissed()
@@ -151,6 +151,8 @@ class Dashboard: AppCompatActivity(),OnMapLoadedListener {
             pointAnnotationManager?.create(pointAnnotationOptions)
         }
 
+
+
     }
     private fun bitmapFromDrawableRes(context: Context, @DrawableRes resourceId: Int) =
         convertDrawableToBitmap(AppCompatResources.getDrawable(context, resourceId))
@@ -215,19 +217,48 @@ class Dashboard: AppCompatActivity(),OnMapLoadedListener {
         mapView.location
             .removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
         mapView.gestures.removeOnMoveListener(onMoveListener)
+        mapView.gestures.removeOnMapClickListener(onMapClickListener)
     }
-    private  val onMapClickListener = object : OnMapClickListener{
+    @SuppressLint("MissingPermission")
+    private val onMapClickListener = object: OnMapClickListener {
+
         override fun onMapClick(point: Point): Boolean {
-            AddMarkerAnnotaton(point)
-            Log.d("Mapclicked","${point.latitude()}")
-            return  true
+            var locationEngine= LocationEngineProvider.getBestLocationEngine(applicationContext)
+            val time_in_seconds = 1000L
+            val max_wait_time = time_in_seconds * 5
+            val request = LocationEngineRequest.Builder(time_in_seconds)
+                .setPriority(LocationEngineRequest.PRIORITY_NO_POWER)
+                .setMaxWaitTime(max_wait_time)
+                .build()
+
+            locationEngine.requestLocationUpdates(request,callback,mainLooper)
+            locationEngine.getLastLocation(callback)
+            var Callrequest: LocationEngineResult? =null
+            Callrequest = callback.get()
+
+            Log.d("location","${Callrequest?.lastLocation?.latitude}")
+            val point = Point.fromLngLat(Callrequest?.lastLocation!!.longitude,
+                Callrequest?.lastLocation!!.latitude)
+
+            return true
         }
 
     }
 
+
+
     override fun onMapLoaded(eventData: MapLoadedEventData) {
         Log.d("Mapclicked","mapLoaded")
     }
+
+    override fun onSuccess(result: LocationEngineResult?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onFailure(exception: Exception) {
+        TODO("Not yet implemented")
+    }
+
 
 //    override fun onRequestPermissionsResult(
 //        requestCode: Int,
