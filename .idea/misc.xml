@@ -7,7 +7,8 @@
         <entry key="app/src/main/res/drawable/dot.xml" value="0.3484375" />
         <entry key="app/src/main/res/drawable/location.xml" value="0.1984375" />
         <entry key="app/src/main/res/layout/activity_dashboard.xml" value="0.25" />
-        <entry key="app/src/main/res/layout/activity_main.xml" value="0.16" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.22" />
+        <entry key="app/src/main/res/layout/activity_register_ambulance.xml" value="0.2767210144927536" />
         <entry key="app/src/main/res/layout/route_navigator.xml" value="0.23641304347826086" />
       </map>
     </option>

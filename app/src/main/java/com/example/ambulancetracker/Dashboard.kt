@@ -18,9 +18,12 @@ import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
+import com.google.gson.GsonBuilder
 import com.mapbox.android.core.location.*
 import com.mapbox.android.gestures.MoveGestureDetector
+import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.api.directions.v5.models.RouteOptions
+import com.mapbox.common.location.Location
 import com.mapbox.geojson.Point
 import com.mapbox.maps.*
 import com.mapbox.maps.extension.observable.eventdata.MapLoadedEventData
@@ -37,10 +40,7 @@ import com.mapbox.maps.plugin.gestures.OnMoveListener
 import com.mapbox.maps.plugin.gestures.gestures
 import com.mapbox.maps.plugin.locationcomponent.*
 import com.mapbox.navigation.base.extensions.applyDefaultNavigationOptions
-import com.mapbox.navigation.base.route.NavigationRoute
-import com.mapbox.navigation.base.route.NavigationRouterCallback
-import com.mapbox.navigation.base.route.RouterFailure
-import com.mapbox.navigation.base.route.RouterOrigin
+import com.mapbox.navigation.base.route.*
 import com.mapbox.navigation.core.MapboxNavigation
 import java.lang.ref.WeakReference
 import java.lang.Exception
@@ -132,7 +132,7 @@ class Dashboard: AppCompatActivity(),OnMapLoadedListener,LocationEngineCallback<
     }
     //This function add annotations or a marker to the map
     @SuppressLint("ResourceType")
-    private fun AddMarkerAnnotaton (point: Point){
+    private fun AddMarkerAnnotaton (point: Point,origin: Point){
         // Create an instance of the Annotation API and get the PointAnnotationManager.
         bitmapFromDrawableRes(
             this@Dashboard,
@@ -151,7 +151,7 @@ class Dashboard: AppCompatActivity(),OnMapLoadedListener,LocationEngineCallback<
             pointAnnotationManager?.create(pointAnnotationOptions)
         }
 
-
+        getRoute(origin,point)
 
     }
     private fun bitmapFromDrawableRes(context: Context, @DrawableRes resourceId: Int) =
@@ -187,16 +187,17 @@ class Dashboard: AppCompatActivity(),OnMapLoadedListener,LocationEngineCallback<
     }
     // This function generates a route between the current users location to a marked area on the map
     private fun getRoute(origin:Point,destination:Point){
-        mapBoxNavigation?.requestRoutes(
-            RouteOptions.builder()
-                .applyDefaultNavigationOptions()
-                .coordinatesList(listOf(origin,destination))
-                .build(),
-                    routesRequestCallback
-        )
+
+        val originLocation = Point.fromLngLat(-122.4192,-122.4192)
+        val destinationPoint = Point.fromLngLat(-122.4106, 37.7676)
+        val routeOptions = RouteOptions.builder().applyDefaultNavigationOptions()
+            .coordinatesList(listOf(originLocation,destinationPoint))
+            .build()
+       mapBoxNavigation?.requestRoutes(routeOptions= routeOptions,navigationCallback)
     }
-    // Routes request callback
-    private val routesRequestCallback = object: NavigationRouterCallback{
+
+    // Navigations Route Callback
+    private val navigationCallback = object:NavigationRouterCallback{
         override fun onCanceled(routeOptions: RouteOptions, routerOrigin: RouterOrigin) {
             TODO("Not yet implemented")
         }
@@ -210,6 +211,7 @@ class Dashboard: AppCompatActivity(),OnMapLoadedListener,LocationEngineCallback<
         }
 
     }
+
     override fun onDestroy() {
         super.onDestroy()
         mapView.location
@@ -222,7 +224,7 @@ class Dashboard: AppCompatActivity(),OnMapLoadedListener,LocationEngineCallback<
     @SuppressLint("MissingPermission")
     private val onMapClickListener = object: OnMapClickListener {
 
-        override fun onMapClick(point: Point): Boolean {
+        override fun onMapClick(destination: Point): Boolean {
             var locationEngine= LocationEngineProvider.getBestLocationEngine(applicationContext)
             val time_in_seconds = 1000L
             val max_wait_time = time_in_seconds * 5
@@ -233,12 +235,19 @@ class Dashboard: AppCompatActivity(),OnMapLoadedListener,LocationEngineCallback<
 
             locationEngine.requestLocationUpdates(request,callback,mainLooper)
             locationEngine.getLastLocation(callback)
-            var Callrequest: LocationEngineResult? =null
-            Callrequest = callback.get()
 
-            Log.d("location","${Callrequest?.lastLocation?.latitude}")
-            val point = Point.fromLngLat(Callrequest?.lastLocation!!.longitude,
-                Callrequest?.lastLocation!!.latitude)
+            // Getting results from the callback
+            if (callback.get() != null)
+            {
+                var latitude: Double? = callback.get()!!.lastLocation?.latitude
+                var longitude: Double? = callback.get()!!.lastLocation?.longitude
+                var origin:Point = Point.fromLngLat(longitude!!,latitude!!)
+                AddMarkerAnnotaton(destination,origin)
+
+            }
+
+
+//            // add a destination marker to the map
 
             return true
         }

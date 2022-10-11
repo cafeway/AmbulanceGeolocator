@@ -15,6 +15,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AmbulanceTracker">
         <activity
+            android:name=".RegisterClient"
+            android:exported="false" />
+        <activity
+            android:name=".RegisterAmbulance"
+            android:exported="false" />
+        <activity
             android:name=".RouteNavigation"
             android:exported="false" />
         <activity
