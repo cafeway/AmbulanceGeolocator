@@ -77,7 +77,7 @@
         android:background="#8A6B0D"
         android:drawableStart="@drawable/ic_baseline_add_location_24"
         android:drawableEnd="@drawable/ic_baseline_add_location_24"
-        android:text="@string/request_ambulance"
+        android:text="Register as User"
         android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.496"
