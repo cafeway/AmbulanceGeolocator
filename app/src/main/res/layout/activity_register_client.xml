@@ -5,5 +5,106 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".RegisterClient">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/scrollview"
+        android:fillViewport="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="">
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/registerButton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <ImageView
+                app:layout_constraintTop_toBottomOf="@id/toolbar"
+                android:id="@+id/UserBannner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+            </ImageView>
+
+            <EditText
+                android:id="@+id/ThirdName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="40dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="40dp"
+                android:background="@drawable/background"
+                android:drawableStart="@drawable/email"
+                android:drawablePadding="10dp"
+                android:hint="Email"
+                android:inputType="text"
+                android:lines="1"
+                android:maxLength="40"
+                android:minHeight="48dp"
+                android:padding="10dp"
+                android:textColor="#2356AE"
+                android:textColorHighlight="#0E0E0E"
+                android:textColorHint="#2341AE"
+                android:textColorLink="#1D34A6"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/UserBannner" />
+
+            <EditText
+                android:id="@+id/Password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="40dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="40dp"
+                android:background="@drawable/background"
+                android:drawableStart="@drawable/password"
+                android:drawablePadding="10dp"
+                android:hint="Password"
+                android:inputType="text"
+                android:lines="1"
+                android:maxLength="15"
+                android:minHeight="48dp"
+                android:padding="10dp"
+                android:textColor="#2356AE"
+                android:textColorHighlight="#0E0E0E"
+                android:textColorHint="#2341AE"
+                android:textColorLink="#1D34A6"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/ThirdName" />
+
+
+
+            <Button
+
+                android:layout_margin="20dp"
+                android:id="@+id/register"
+                android:layout_width="322dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="40dp"
+                android:layout_marginEnd="40dp"
+                android:width="300dp"
+                android:textColor="@color/white"
+                android:clickable="true"
+                android:text="Register"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/Password" />
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                app:titleMargin="20dp"
+                app:titleMargins="20dp"
+                app:title="Register As A User"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/colorPrimary"
+                android:minHeight="?attr/actionBarSize"
+                android:theme="?attr/actionBarTheme"
+                tools:layout_editor_absoluteX="-14dp"
+                tools:layout_editor_absoluteY="4dp" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
