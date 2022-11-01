@@ -50,10 +50,10 @@ final Future<SharedPreferences> preferences =SharedPreferences.getInstance();
               ),
               Tab(
                 icon: Icon(
-                  Icons.help,
+                  Icons.settings,
                   color: Colors.red,
                 ),
-                text: "Help",
+                text: "Settings",
               ),
               
             ]),
@@ -70,7 +70,12 @@ final Future<SharedPreferences> preferences =SharedPreferences.getInstance();
                       decoration: BoxDecoration(
                           color: Color.fromRGBO(220, 220, 220, 1.0)),
                       child: InkWell(
-                        onTap: () {},
+                        onTap: () {
+                             Navigator.pushNamed(context, 'showMap',arguments: {
+                          'lat': _currentPosition?.latitude.toDouble(),
+                           'long': _currentPosition?.longitude.toDouble()
+                        });
+                        },
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           mainAxisSize: MainAxisSize.min,
