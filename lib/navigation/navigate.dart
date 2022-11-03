@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mapbox_navigation/library.dart';
+import 'package:latlong2/latlong.dart';
 
 
 
@@ -22,9 +23,12 @@ class NavigationPage extends StatefulWidget {
 }
 
 class _NavigationPageState extends State<NavigationPage> {
+  
   late MapBoxNavigation _directions;
   late MapBoxOptions _options;
   late MapBoxNavigationViewController _controller;
+  late LatLng origin;
+   late LatLng destination;
   late double  _distanceRemaining , _durationRemaining ;
   bool _arrived = false;
   bool _routeBuilt = false;
@@ -57,6 +61,17 @@ class _NavigationPageState extends State<NavigationPage> {
 
   @override
   Widget build(BuildContext context) {
+    var point = ModalRoute.of(context)!.settings.arguments as Map;
+    var origin = point['origin'];
+    var destination = point['destination'];
+    LatLng originCast = origin;
+    LatLng destinationCast = destination;
+    setState(() {
+      origin = originCast;
+      destination = destinationCast;
+    });
+ 
+   
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -92,7 +107,7 @@ class _NavigationPageState extends State<NavigationPage> {
              Container(
                 color: Colors.grey,
                 child: MapBoxNavigationView(
-                    options: _options,
+                    // options: _options,
                     onRouteEvent: _onRouteEvent,
                     onCreated:
                         (MapBoxNavigationViewController controller){
@@ -114,7 +129,7 @@ class _NavigationPageState extends State<NavigationPage> {
     if (!mounted) return;
         _directions = MapBoxNavigation(onRouteEvent: _onRouteEvent);
            _options = MapBoxOptions(
-                     initialLatitude: 36.1175275,
+                     initialLatitude: 36.1175175,
                      initialLongitude: -115.1839524,
                      zoom: 13.0,
                      tilt: 0.0,
@@ -146,6 +161,7 @@ class _NavigationPageState extends State<NavigationPage> {
           case MapBoxEvent.progress_change:
             var progressEvent = e.data as RouteProgressEvent;
             _arrived = progressEvent.arrived!;
+            
             if (progressEvent.currentStepInstruction != null)
               _instruction = progressEvent.currentStepInstruction!;
             break;

@@ -289,6 +289,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.1"
+  mapbox_api:
+    dependency: "direct main"
+    description:
+      name: mapbox_api
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0"
   mapbox_search:
     dependency: "direct main"
     description:

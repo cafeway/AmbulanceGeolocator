@@ -13,6 +13,9 @@ import 'package:list_picker/list_picker.dart';
 import 'package:mapbox_search/mapbox_search.dart';
 import '../Models/ MapMarker.dart';
 import 'package:avatar_glow/avatar_glow.dart';
+import 'package:mapbox_search/mapbox_search.dart';
+import 'package:mapbox_api/mapbox_api.dart';
+
 
 class AvailableCars extends StatefulWidget {
   const AvailableCars({super.key});
@@ -22,6 +25,9 @@ class AvailableCars extends StatefulWidget {
 }
 
 class _AvailableCarsState extends State<AvailableCars> {
+   final mapbox = MapboxApi(
+    accessToken: Constants.mapBoxAccessToken
+   );
   Position? _currentPosition;
   double? lat;
   double? long;
@@ -48,6 +54,9 @@ class _AvailableCarsState extends State<AvailableCars> {
 
   @override
   Widget build(BuildContext context) {
+    
+    // for getting the choosen value
+    final searchBarController = TextEditingController();
     final position = ModalRoute.of(context)!.settings.arguments as Map;
     // var b = position.toString();
     var a = position['lat'];
@@ -164,9 +173,52 @@ class _AvailableCarsState extends State<AvailableCars> {
               ),
             ],
           ),
-          ListPickerField(label: 'ambulances', items: ["Meru Level Five", "Karen Hospital", "Meru Jordan Hospital","Woodlands Hospital Meru","Aga Khan","Meru District Hospital","Consolata Missions Hospital"]),
+          ListPickerField(controller: searchBarController,label: 'Choose a nearby hospital', items: ["Meru Level Five", "Karen Hospital", "Meru Jordan Hospital","Woodlands Hospital Meru","Aga Khan Embu","Meru District Hospital","Consolata Missions Hospital"]),
+          Positioned(
+            top: 65,
+            left: 120,
+            child: TextButton(
+            
+            style: ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.red),foregroundColor: MaterialStateProperty.all(Colors.white)),
+            onPressed: () async { 
+            var parameters  = searchBarController.text;
+            switch (parameters) {
+              case "Meru Level Five":
+                   var origin = LatLng(lat,long);
+                   var destination = LatLng(-0.0509,37.6540);
+                  requestAmbulance(origin,destination);
+                break;
+              default:
+            }
+            // final response = await mapbox.forwardGeocoding.request(
+            //   searchText: "Nairobi university",
+            //   fuzzyMatch: true,
+            //   language: 'en',
+            //   country: ['ke']
+            // );
+            
+
+            // if (response.features != null && response.features!.isNotEmpty){
+            //   for (final feature in response.features!){
+            //     print('${feature.center}');
+            //   }
+            // }
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Your sos request has been sent successfully'")));
+             
+            }
+            ,
+          child: Text("Request Ambulance"),)),
         ],
       ),
     );
   }
+
+void requestAmbulance(LatLng origin,LatLng destination) {
+  Navigator.pushNamed(context, 'navigate', arguments: {
+    'origin': origin,
+    'destination': destination
+  });
 }
+
+}
+

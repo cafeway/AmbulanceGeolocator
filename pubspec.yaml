@@ -50,6 +50,7 @@ dependencies:
   shared_preferences: ^2.0.15
   mapbox_search: any
   list_picker: ^1.0.0
+  mapbox_api: ^1.0.0
 
 dev_dependencies:
   flutter_test:
