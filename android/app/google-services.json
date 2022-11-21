@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "729569899229",
+    "project_id": "longlifetrading-6e417",
+    "storage_bucket": "longlifetrading-6e417.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:729569899229:android:2701a656d75d7ea91de134",
+        "android_client_info": {
+          "package_name": "com.example.ambulance"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "729569899229-cqjru7hmagl6vq129t5fva4e1ehaetqa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCG2ml4Qwto9v6YnrgkEhKwtgy7rb3302A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "729569899229-cqjru7hmagl6vq129t5fva4e1ehaetqa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
