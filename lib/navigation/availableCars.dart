@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,11 +11,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Extras/Constants.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:list_picker/list_picker.dart';
-import 'package:mapbox_search/mapbox_search.dart';
+
 import '../Models/ MapMarker.dart';
 import 'package:avatar_glow/avatar_glow.dart';
-import 'package:mapbox_search/mapbox_search.dart';
-import 'package:mapbox_api/mapbox_api.dart';
+
+
 
 
 class AvailableCars extends StatefulWidget {
@@ -25,9 +26,7 @@ class AvailableCars extends StatefulWidget {
 }
 
 class _AvailableCarsState extends State<AvailableCars> {
-   final mapbox = MapboxApi(
-    accessToken: Constants.mapBoxAccessToken
-   );
+
   Position? _currentPosition;
   double? lat;
   double? long;
@@ -119,6 +118,7 @@ class _AvailableCarsState extends State<AvailableCars> {
                         );
                       }),
                       Marker(
+                      
                       point: LatLng(0.0453186,37.657764),
                       height: 80,
                       width: 80,
@@ -182,27 +182,10 @@ class _AvailableCarsState extends State<AvailableCars> {
             style: ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.red),foregroundColor: MaterialStateProperty.all(Colors.white)),
             onPressed: () async { 
             var parameters  = searchBarController.text;
-            switch (parameters) {
-              case "Meru Level Five":
-                   var origin = LatLng(lat,long);
-                   var destination = LatLng(-0.0509,37.6540);
-                  requestAmbulance(origin,destination);
-                break;
-              default:
-            }
-            // final response = await mapbox.forwardGeocoding.request(
-            //   searchText: "Nairobi university",
-            //   fuzzyMatch: true,
-            //   language: 'en',
-            //   country: ['ke']
-            // );
-            
-
-            // if (response.features != null && response.features!.isNotEmpty){
-            //   for (final feature in response.features!){
-            //     print('${feature.center}');
-            //   }
-            // }
+            var origin = LatLng(lat,long);
+            var destination = LatLng(-0.0509,37.6540);
+            requestAmbulance(origin,destination,parameters);
+    
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Your sos request has been sent successfully'")));
              
             }
@@ -213,10 +196,22 @@ class _AvailableCarsState extends State<AvailableCars> {
     );
   }
 
-void requestAmbulance(LatLng origin,LatLng destination) {
-  Navigator.pushNamed(context, 'navigate', arguments: {
-    'origin': origin,
-    'destination': destination
+void requestAmbulance(LatLng origin,LatLng destination,String org) {
+  print("yes");
+  FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.email).collection('requests').add({
+    'organization':org,
+    'origin': origin.toString(),
+    'destination': destination.toString(),
+    'status': 'pending',
+    'time': DateTime.now(),
+  });
+
+  FirebaseFirestore.instance.collection('requests').add({
+    'organization': org,
+    'origin': origin.toString(),
+    'destination': destination.toString(),
+    'time': DateTime.now(),
+    'user': FirebaseAuth.instance.currentUser!.email
   });
 }
 

@@ -9,14 +9,14 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Extras/Constants.dart';
 import 'package:flutter_map/plugin_api.dart';
-class dashboard extends StatefulWidget {
-  const dashboard({super.key});
+class driversDashboard extends StatefulWidget {
+  const driversDashboard({super.key});
 
   @override
-  State<dashboard> createState() => _dashboardState();
+  State<driversDashboard> createState() => _driversDashboardState();
 }
 
-class _dashboardState extends State<dashboard> {
+class _driversDashboardState extends State<driversDashboard> {
   Position?  _currentPosition;
   double? lat;
   double long= 0.0;
@@ -38,7 +38,7 @@ final Future<SharedPreferences> preferences =SharedPreferences.getInstance();
         child: Scaffold(
           appBar: AppBar(
             automaticallyImplyLeading: false,
-            title: Text("Ambulance Geolocator"),
+            title: Text("Ambulance Geolocsator"),
             centerTitle: true,
             bottom: const TabBar(tabs: [
               Tab(
@@ -48,19 +48,13 @@ final Future<SharedPreferences> preferences =SharedPreferences.getInstance();
                 ),
                 text: "Home",
               ),
-              Tab(
-                icon: Icon(
-                  Icons.map,
-                  color: Colors.red,
-                ),
-                text: "Find Ambulances",
-              ),
+            
               
             ]),
           ),
           body: TabBarView(children: [
             GridView.count(
-              crossAxisCount: 3,
+              crossAxisCount: 1,
               padding: EdgeInsets.all(3.0),
               children: [
                 Card(
@@ -71,7 +65,7 @@ final Future<SharedPreferences> preferences =SharedPreferences.getInstance();
                           color: Color.fromRGBO(220, 220, 220, 1.0)),
                       child: InkWell(
                         onTap: () {
-                             Navigator.pushNamed(context, 'requests');
+                             Navigator.pushNamed(context, 'drivers-help');
                         },
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -308,3 +302,5 @@ final Future<SharedPreferences> preferences =SharedPreferences.getInstance();
    
   }
 }
+
+

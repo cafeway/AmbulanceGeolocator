@@ -1,15 +1,21 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geotracker/authentication/register.dart';
+import 'package:geotracker/authentication/login.dart';
+import 'package:geotracker/navigation/drivers-dashboard.dart';
 import './navigation/dashboard.dart';
+import './navigation/driversHelp.dart';
 
 import './navigation/navigate.dart';
 import './navigation/availableCars.dart';
+import './authentication/createUserAccount.dart';
+import './navigation/help.dart';
 
-void main() async{ 
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(const MyApp());
@@ -23,11 +29,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       routes: {
-        'register':(context) => RegisterDemo(),
-        'dashboard':(context) => dashboard(),
-        'navigate':(context) => NavigationPage(title: "yes"),
-        'showMap':(context) => AvailableCars(),
-        'login':(context) => MyHomePage(title: "Login")
+        'register': (context) => RegisterDemo(),
+        'dashboard': (context) => dashboard(),
+        'navigate': (context) => NavigationPage(title: "yes"),
+        'showMap': (context) => AvailableCars(),
+        'login': (context) => const MyHomePage(title: "Login"),
+        'create-user': (context) => RegisterUser(),
+        'requests': (context) => viewRequets(),
+        'driversDash': (context) => driversDashboard(),
+        'drivers-help': (context) =>driversRequests()
       },
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
@@ -69,7 +79,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   Position? _currentPosition;
   int _counter = 0;
-    TextEditingController email = TextEditingController();
+  TextEditingController email = TextEditingController();
   TextEditingController password = TextEditingController();
   TextEditingController username = TextEditingController();
   TextEditingController gender = TextEditingController();
@@ -88,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-        final scaffold = ScaffoldMessenger.of(context);
+    final scaffold = ScaffoldMessenger.of(context);
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -101,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-     body: SingleChildScrollView(
+      body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
             Padding(
@@ -189,7 +199,7 @@ class _MyHomePageState extends State<MyHomePage> {
             // Padding(
             //   padding: const EdgeInsets.only(
             //       left: 15.0, right: 15.0, top: 0, bottom: 10.0),
-              
+
             // ),
             const SizedBox(
               height: 10.0,
@@ -212,12 +222,21 @@ class _MyHomePageState extends State<MyHomePage> {
                     ));
                   } else {
                     try {
-                    FirebaseAuth.instance
-                              .signInWithEmailAndPassword(
-                                  email: email.text, password: password.text)
-                              .then((value) => 
-                              Navigator.pushNamed(context, 'dashboard')
-                              );
+                      FirebaseAuth.instance
+                          .signInWithEmailAndPassword(
+                              email: email.text, password: password.text)
+                          .then((val) {
+                        FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(email.text)
+                            .get().then((DocumentSnapshot value) => {
+                               if (value.get('role') == 'user') {
+                              Navigator.of(context).pushNamed('dashboard')
+                            } else if (value.get('role')  == 'driver') {
+                              Navigator.of(context).pushNamed('driversDash')
+                            }
+                            });
+                      });
                     } on FirebaseAuthException catch (e) {
                       if (e.code == "Firebase_auth/user-not-found") {
                         // scaffold.showSnackBar(SnackBar(
@@ -245,14 +264,22 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(
               height: 10,
             ),
-            TextButton(onPressed: (){
-              Navigator.pushNamed(context, 'register');
-            }, child: Text("Register a Vehicle")),
+            TextButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, 'register');
+                },
+                child: Text("Register a Vehicle")),
+            SizedBox(
+              height: 10,
+            ),
+            TextButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, 'create-user');
+                },
+                child: Text("Register User")),
           ],
         ),
       ),
     );
-    
   }
- 
 }
